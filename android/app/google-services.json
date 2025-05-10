@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "210868097339",
+    "project_id": "wordapp-c94ec",
+    "storage_bucket": "wordapp-c94ec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:210868097339:android:47543ea8ba7e756e37e71e",
+        "android_client_info": {
+          "package_name": "com.anonymous.vocabp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzMPVefXdfEb2cBIUNLhpQMLkY9D8yKT4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -25,19 +25,21 @@ export default function TabLayout() {
           },
           default: {},
         }),
-      }}>
+      }}
+      initialRouteName="homePage"
+    >
       <Tabs.Screen
-        name="index"
+        name="homePage"
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="exercise"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Exercise',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="pencil" color={color} />,
         }}
       />
     </Tabs>

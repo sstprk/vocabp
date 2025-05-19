@@ -4,12 +4,9 @@ import { getFirestore } from 'firebase/firestore';
 
 // Firebase yapılandırma bilgileriniz
 const firebaseConfig = {
-  apiKey: "AIzaSyCxdN6eHgwTWEIn0KHhOQnNT6lCOnVCAeo",
-  authDomain: "wordapp-c94ec.firebaseapp.com",
-  projectId: "wordapp-c94ec",
-  storageBucket: "wordapp-c94ec.firebasestorage.app",
-  messagingSenderId: "210868097339",
-  appId: "1:210868097339:ios:5c73891ab884821237e71e"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
 };
 
 // Firebase'i başlat

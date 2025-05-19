@@ -12,6 +12,7 @@ import {
 import { addWord, getWordsSimple, Word } from '../services/wordService';
 import { auth } from '../../firebaseConfig';
 import { useRouter } from 'expo-router';
+import { Platform } from 'react-native';
 
 export default function IndexScreen() {
   const [word, setWord] = useState('');
@@ -165,6 +166,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f0f4f8',
     padding: 16,
+    paddingTop: Platform.OS === 'android' ? 20 : 40,
   },
   loadingContainer: {
     flex: 1,

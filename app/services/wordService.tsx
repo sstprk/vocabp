@@ -21,28 +21,27 @@ export interface Word {
 export const addWord = async (english: string, turkish: string): Promise<void> => {
   try {
     const user = auth.currentUser;
-    
+
     if (!user) {
       throw new Error('Lütfen önce giriş yapınız! 🔒');
     }
 
-    // Boş giriş kontrolü
     const trimmedEnglish = english.trim();
     const trimmedTurkish = turkish.trim();
+
     if (!trimmedEnglish || !trimmedTurkish) {
       throw new Error('❌ Hem İngilizce hem Türkçe alanları doldurun!');
     }
 
-    // Firestore'a ekleme
     const wordsRef = collection(db, 'users', user.uid, 'words');
     const docRef = await addDoc(wordsRef, {
       english: trimmedEnglish,
       turkish: trimmedTurkish,
+      correctCount: 0, // 👈 Sayaç buraya eklendi
       createdAt: serverTimestamp()
     });
 
     console.log('✅ Kelime eklendi. ID:', docRef.id);
-
   } catch (error) {
     console.error('🔥 Hata Detayı:', error);
     throw new Error(error instanceof Error ? error.message : 'Kelime eklenirken teknik bir hata oluştu 🛠');

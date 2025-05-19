@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Platform } from 'react-native';
 
 const ExerciseScreen = () => {
   const router = useRouter();
@@ -36,9 +37,9 @@ export default ExerciseScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 40,
     padding: 10,
     backgroundColor: '#fff',
+    paddingTop: Platform.OS === 'android' ? 20 : 60,
   },
   box: {
     height: 100,

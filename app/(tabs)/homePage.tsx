@@ -9,7 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { addWord, getWordsSimple, Word } from '../services/wordService';
+import { addWord, getWordsSimple, deleteWord, Word } from '../services/wordService';
 import { auth } from '../../firebaseConfig';
 import { useRouter } from 'expo-router';
 import { Platform } from 'react-native';
@@ -22,14 +22,13 @@ export default function IndexScreen() {
   const [addingWord, setAddingWord] = useState(false);
   const router = useRouter();
 
-  // KELİMELERİ YÜKLE VE AUTH DİNLE
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (!user) {
         router.replace('/login');
         return;
       }
-      
+
       try {
         setLoading(true);
         const data = await getWordsSimple();
@@ -45,50 +44,70 @@ export default function IndexScreen() {
 
     return () => unsubscribe();
   }, []);
-  
 
-  // KELİME EKLEME FONKSİYONU
- const handleAddWord = async () => {
-  if (!word.trim() || !meaning.trim()) {
-    Alert.alert('Uyarı', 'Lütfen tüm alanları doldurun!');
-    return;
-  }
-
-  let newWord: Word | null = null; // Üstte tanımla
-  
-  try {
-    setAddingWord(true);
-    
-    // Optimistik güncelleme için geçici ID
-    newWord = {
-      kelime: word.trim(),
-      anlami: meaning.trim(),
-      createdAt: undefined,
-      tempId: Date.now().toString() // Ekstra benzersiz tanımlayıcı
-    };
-
-    setWords(prev => [newWord!, ...prev]);
-    
-    await addWord(word, meaning);
-    
-    setWord('');
-    setMeaning('');
-    Alert.alert('Başarılı', 'Kelime başarıyla eklendi!');
-
-  } catch (error) {
-    // Hata durumunda geçici kelimeyi kaldır
-    if (newWord) {
-      setWords(prev => prev.filter(item => item.tempId !== newWord!.tempId));
+  const handleAddWord = async () => {
+    if (!word.trim() || !meaning.trim()) {
+      Alert.alert('Uyarı', 'Lütfen tüm alanları doldurun!');
+      return;
     }
-    
-    const errorMessage = error instanceof Error ? error.message : 'Teknik hata';
-    Alert.alert('Hata', errorMessage);
-  } finally {
-    setAddingWord(false);
-  }
-};
 
-  // YÜKLENİYOR DURUMU
+    let newWord: Word | null = null;
+
+    try {
+      setAddingWord(true);
+
+      newWord = {
+        kelime: word.trim(),
+        anlami: meaning.trim(),
+        createdAt: undefined,
+        tempId: Date.now().toString(),
+      };
+
+      setWords(prev => [newWord!, ...prev]);
+
+      await addWord(word, meaning);
+
+      setWord('');
+      setMeaning('');
+      Alert.alert('Başarılı', 'Kelime başarıyla eklendi!');
+    } catch (error) {
+      if (newWord) {
+        setWords(prev => prev.filter(item => item.tempId !== newWord!.tempId));
+      }
+
+      const errorMessage = error instanceof Error ? error.message : 'Teknik hata';
+      Alert.alert('Hata', errorMessage);
+    } finally {
+      setAddingWord(false);
+    }
+  };
+
+  const handleDelete = (item: Word) => {
+    Alert.alert(
+      'Silmek istediğine emin misin?',
+      `"${item.kelime}" kelimesi silinecek.`,
+      [
+        {
+          text: 'İptal',
+          style: 'cancel',
+        },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteWord(item.tempId || item.kelime);
+              setWords(prev => prev.filter(w => w !== item));
+              Alert.alert('✅ Başarılı', 'Kelime silindi');
+            } catch (err) {
+              Alert.alert('⛔ Hata', 'Kelime silinemedi');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -102,7 +121,6 @@ export default function IndexScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>📚 Kelime Defterim</Text>
 
-      {/* INPUT ALANLARI */}
       <View style={styles.inputGroup}>
         <TextInput
           style={styles.input}
@@ -112,7 +130,6 @@ export default function IndexScreen() {
           onChangeText={setWord}
           editable={!addingWord}
         />
-        
         <TextInput
           style={styles.input}
           placeholder="Türkçe Anlamı"
@@ -123,7 +140,6 @@ export default function IndexScreen() {
         />
       </View>
 
-      {/* EKLEME BUTONU */}
       <TouchableOpacity
         style={[styles.button, addingWord && styles.buttonDisabled]}
         onPress={handleAddWord}
@@ -136,12 +152,18 @@ export default function IndexScreen() {
         )}
       </TouchableOpacity>
 
-      {/* KELİME LİSTESİ */}
       <FlatList
         data={words}
         keyExtractor={(item, index) => item.tempId || `word-${index}`}
         renderItem={({ item }) => (
           <View style={styles.wordCard}>
+            <TouchableOpacity
+              style={styles.deleteIcon}
+              onPress={() => handleDelete(item)}
+            >
+              <Text style={styles.deleteText}>🗑️</Text>
+            </TouchableOpacity>
+
             <Text style={styles.wordText}>{item.kelime}</Text>
             <Text style={styles.meaningText}>{item.anlami}</Text>
             {item.createdAt && (
@@ -160,7 +182,6 @@ export default function IndexScreen() {
   );
 }
 
-// YENİ STİL DÜZENİ
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -235,6 +256,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
+    position: 'relative',
   },
   wordText: {
     fontSize: 16,
@@ -257,5 +279,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 24,
     fontStyle: 'italic',
+  },
+  deleteIcon: {
+    position: 'absolute',
+    top: 6,
+    right: 8,
+    zIndex: 1,
+    padding: 4,
+  },
+  deleteText: {
+    fontSize: 14,
   },
 });

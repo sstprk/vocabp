@@ -27,6 +27,7 @@ export default function IndexScreen() {
       if (!user) {
         router.replace('/login');
         return;
+      
       }
 
       try {

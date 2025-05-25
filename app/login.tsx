@@ -76,9 +76,10 @@ const LoginScreen: React.FC = () => {
         secureTextEntry
       />
 
-      <TouchableOpacity onPress={() => Alert.alert("Bilgi", "Şifre sıfırlama özelliği henüz aktif değil.")}>
-        <Text style={styles.forgotText}>Şifreni mi unuttun?</Text>
-      </TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push('/forgotPasswordSc')}>
+  <Text style={styles.forgotText}>Şifreni mi unuttun?</Text>
+</TouchableOpacity>
+
 
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Giriş Yap</Text>

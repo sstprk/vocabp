@@ -18,8 +18,6 @@ export interface Word {
   createdAt?: Timestamp;
   tempId?: string;
 }
-
-// ✅ KELİME EKLEME FONKSİYONU
 export const addWord = async (english: string, turkish: string): Promise<void> => {
   try {
     const user = auth.currentUser;
@@ -36,11 +34,15 @@ export const addWord = async (english: string, turkish: string): Promise<void> =
     }
 
     const wordsRef = collection(db, 'users', user.uid, 'words');
+
+    const now = new Date();
+
     const docRef = await addDoc(wordsRef, {
       english: trimmedEnglish,
       turkish: trimmedTurkish,
       correctCount: 0,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
+      nextReview: Timestamp.fromDate(now), // 🔑 Bu alan eklendi
     });
 
     console.log('✅ Kelime eklendi. ID:', docRef.id);

@@ -9,21 +9,21 @@ const ExerciseScreen = () => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.box, { backgroundColor: '#72A1FF' }]}
+        style={[styles.box, { backgroundColor: '#3A86FF' }]}
         onPress={() => router.push('/quizScreen')}
       >
         <Text style={styles.text}>Quiz</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.box, { backgroundColor: '#72A1FF' }]}
+        style={[styles.box, { backgroundColor: '#3A86FF' }]}
         onPress={() => router.push('/puzzleScreen')}
       >
         <Text style={styles.text}>Puzzle</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.box, { backgroundColor: '#72A1FF' }]}
+        style={[styles.box, { backgroundColor: '#3A86FF' }]}
         onPress={() => router.push('/brainChain')}
       >
         <Text style={styles.text}>Brain Chain</Text>

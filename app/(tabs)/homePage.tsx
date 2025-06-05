@@ -8,11 +8,15 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Image,
+  Platform,
 } from 'react-native';
 import { addWord, getWordsSimple, deleteWord, Word } from '../services/wordService';
 import { auth } from '../../firebaseConfig';
 import { useRouter } from 'expo-router';
-import { Platform } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+import { Timestamp } from 'firebase/firestore';
 
 export default function IndexScreen() {
   const [word, setWord] = useState('');
@@ -20,6 +24,7 @@ export default function IndexScreen() {
   const [words, setWords] = useState<Word[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingWord, setAddingWord] = useState(false);
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -27,7 +32,6 @@ export default function IndexScreen() {
       if (!user) {
         router.replace('/login');
         return;
-      
       }
 
       try {
@@ -46,38 +50,89 @@ export default function IndexScreen() {
     return () => unsubscribe();
   }, []);
 
+  const handlePickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+
+      if (result.canceled) {
+        Alert.alert('İptal', 'Görsel seçilmedi.');
+        return null;
+      }
+
+      return result.assets[0].uri;
+    } catch (error) {
+      Alert.alert('Hata', 'Görsel seçilirken hata oluştu.');
+      return null;
+    }
+  };
+
+  const onPressPickImage = async () => {
+    if (addingWord) return;
+
+    const pickedImage = await handlePickImage();
+    if (pickedImage) {
+      setSelectedImageUri(pickedImage);
+      Alert.alert('✅ Başarılı', 'Görsel seçildi.');
+    }
+  };
+
   const handleAddWord = async () => {
     if (!word.trim() || !meaning.trim()) {
-      Alert.alert('Uyarı', 'Lütfen tüm alanları doldurun!');
+      Alert.alert('Uyarı', 'Lütfen İngilizce kelime ve Türkçe anlamını girin!');
       return;
     }
 
-    let newWord: Word | null = null;
+    if (!selectedImageUri) {
+      Alert.alert('Uyarı', 'Lütfen önce bir görsel seçin!');
+      return;
+    }
 
     try {
       setAddingWord(true);
 
-      newWord = {
-        kelime: word.trim(),
-        anlami: meaning.trim(),
-        createdAt: undefined,
-        tempId: Date.now().toString(),
-      };
+      // Görseli cihazda saklama
+      const fileName = selectedImageUri.split('/').pop() || `${Date.now()}.jpg`;
+      const imagesDir = `${FileSystem.documentDirectory}images`;
 
-      setWords(prev => [newWord!, ...prev]);
-
-      await addWord(word, meaning);
-
-      setWord('');
-      setMeaning('');
-      Alert.alert('Başarılı', 'Kelime başarıyla eklendi!');
-    } catch (error) {
-      if (newWord) {
-        setWords(prev => prev.filter(item => item.tempId !== newWord!.tempId));
+      const dirInfo = await FileSystem.getInfoAsync(imagesDir);
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(imagesDir, { intermediates: true });
       }
 
-      const errorMessage = error instanceof Error ? error.message : 'Teknik hata';
-      Alert.alert('Hata', errorMessage);
+      const newPath = `${imagesDir}/${fileName}`;
+      await FileSystem.copyAsync({
+        from: selectedImageUri,
+        to: newPath,
+      });
+
+      // Yeni kelime nesnesi oluştur
+      const newWord: Word = {
+        kelime: word.trim(),
+        anlami: meaning.trim(),
+        createdAt: Timestamp.now(),
+        tempId: Date.now().toString(),
+        imagePath: newPath,
+      };
+
+      // Listeye hemen ekle (createdAt gösterimi için)
+      setWords(prev => [newWord, ...prev]);
+
+      // Veritabanına ekle
+      await addWord(word.trim(), meaning.trim(), newPath);
+
+      // Temizle
+      setWord('');
+      setMeaning('');
+      setSelectedImageUri(null);
+
+      Alert.alert('✅ Başarılı', 'Kelime başarıyla eklendi!');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Hata', 'Kelime eklenirken bir hata oluştu.');
     } finally {
       setAddingWord(false);
     }
@@ -88,10 +143,7 @@ export default function IndexScreen() {
       'Silmek istediğine emin misin?',
       `"${item.kelime}" kelimesi silinecek.`,
       [
-        {
-          text: 'İptal',
-          style: 'cancel',
-        },
+        { text: 'İptal', style: 'cancel' },
         {
           text: 'Sil',
           style: 'destructive',
@@ -100,7 +152,7 @@ export default function IndexScreen() {
               await deleteWord(item.tempId || item.kelime);
               setWords(prev => prev.filter(w => w !== item));
               Alert.alert('✅ Başarılı', 'Kelime silindi');
-            } catch (err) {
+            } catch {
               Alert.alert('⛔ Hata', 'Kelime silinemedi');
             }
           },
@@ -141,6 +193,23 @@ export default function IndexScreen() {
         />
       </View>
 
+      {/* Seçilen görsel küçük önizleme */}
+      {selectedImageUri && (
+        <Image
+          source={{ uri: selectedImageUri }}
+          style={styles.previewImage}
+          resizeMode="cover"
+        />
+      )}
+
+      <TouchableOpacity
+        style={[styles.button, addingWord && styles.buttonDisabled]}
+        onPress={onPressPickImage}
+        disabled={addingWord}
+      >
+        <Text style={styles.buttonText}>🖼️ Görsel Seç</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={[styles.button, addingWord && styles.buttonDisabled]}
         onPress={handleAddWord}
@@ -165,13 +234,25 @@ export default function IndexScreen() {
               <Text style={styles.deleteText}>🗑️</Text>
             </TouchableOpacity>
 
-            <Text style={styles.wordText}>{item.kelime}</Text>
-            <Text style={styles.meaningText}>{item.anlami}</Text>
-            {item.createdAt && (
-              <Text style={styles.dateText}>
-                📅 {item.createdAt.toDate().toLocaleDateString('tr-TR')}
-              </Text>
-            )}
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.wordText}>{item.kelime}</Text>
+                <Text style={styles.meaningText}>{item.anlami}</Text>
+                {item.createdAt && typeof item.createdAt.toDate === 'function' && (
+                  <Text style={styles.dateText}>
+                    📅 {item.createdAt.toDate().toLocaleDateString('tr-TR')}
+                  </Text>
+                )}
+              </View>
+
+              {item.imagePath ? (
+                <Image
+                  source={{ uri: item.imagePath }}
+                  style={styles.wordImage}
+                  resizeMode="cover"
+                />
+              ) : null}
+            </View>
           </View>
         )}
         ListEmptyComponent={
@@ -242,6 +323,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
+  previewImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginBottom: 12,
+    alignSelf: 'center',
+  },
   listContainer: {
     paddingBottom: 24,
   },
@@ -290,5 +378,11 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     fontSize: 14,
+  },
+  wordImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginLeft: 12,
   },
 });

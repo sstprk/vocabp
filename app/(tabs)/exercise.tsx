@@ -12,7 +12,14 @@ const ExerciseScreen = () => {
         style={[styles.box, { backgroundColor: '#3A86FF' }]}
         onPress={() => router.push('/quizScreen')}
       >
-        <Text style={styles.text}>Quiz</Text>
+        <Text style={styles.text}>Word Quiz</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={[styles.box, { backgroundColor: '#3A86FF' }]}
+        onPress={() => router.push('/ImgQuizScreen')}
+      >
+        <Text style={styles.text}>Image Quiz</Text>
       </TouchableOpacity>
 
       <TouchableOpacity

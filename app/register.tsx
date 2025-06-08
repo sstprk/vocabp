@@ -19,11 +19,10 @@ const LoginScreen = () => {
     Alert.alert("Başarılı", "Kayıt başarılı!");
     router.navigate("/login");
   } catch (error) {
-    console.error("Kayıt hatası:", error);
     if (error instanceof Error) {
-      Alert.alert("Hata", error.message);
+      Alert.alert("Hata", "Bir hata oluştu. Lütfen tekrar deneyin.");
     } else {
-      Alert.alert("Hata", "Bilinmeyen bir hata oluştu.");
+      Alert.alert("Hata", "Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
     }
   }
 };

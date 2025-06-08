@@ -48,7 +48,7 @@ const SettingsScreen = () => {
       router.replace('/login');
     } catch (error) {
       console.error("Çıkış hatası:", error);
-      Alert.alert("Hata", "Çıkış yapılamadı.");
+      Alert.alert("Hata", "Çıkış yapılamadı. Lütfen tekrar deneyin.");
     }
   };
 
@@ -61,7 +61,7 @@ const SettingsScreen = () => {
     setLoading(true);
     const user = auth.currentUser;
     if (!user || !user.email) {
-      Alert.alert('Hata', 'Kullanıcı bulunamadı.');
+      Alert.alert('Hata', 'Kullanıcı bulunamadı. Lütfen tekrar giriş yapın.');
       setLoading(false);
       return;
     }
@@ -72,13 +72,13 @@ const SettingsScreen = () => {
       await reauthenticateWithCredential(user, credential);
       // Şifre güncelleme
       await updatePassword(user, newPassword);
-      Alert.alert('Başarılı', 'Şifreniz başarıyla değiştirildi.');
+      Alert.alert('Başarılı', 'Şifreniz başarıyla değiştirildi!');
       setModalVisible(false);
       setCurrentPassword('');
       setNewPassword('');
     } catch (error: any) {
       console.error(error);
-      Alert.alert('Hata', error.message || 'Şifre değiştirilemedi.');
+      Alert.alert('Hata', 'Şifre değiştirilemedi. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
     }

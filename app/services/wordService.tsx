@@ -8,10 +8,10 @@ import {
   orderBy,
   Timestamp,
   deleteDoc,
-  doc // 👈 delete işleminde kullanılacak
+  doc,
+  where
 } from 'firebase/firestore';
 import * as FileSystem from 'expo-file-system';
-
 
 // services/wordService.tsx
 export type Word = {
@@ -21,6 +21,7 @@ export type Word = {
   correctCount?: number;
   imagePath?: string | null;
   tempId: string;
+  nextReview?: Timestamp;
 };
 
 export const addWord = async (
@@ -64,12 +65,13 @@ export const getWordsSimple = async (): Promise<Word[]> => {
       const data = doc.data();
 
       return {
-        kelime: data.english || 'Bilinmeyen Kelime',
-        anlami: data.turkish || 'Bilinmeyen Anlam',
+        kelime: data.english || data.kelime || 'Bilinmeyen Kelime',
+        anlami: data.turkish || data.anlami || 'Bilinmeyen Anlam',
         createdAt: data.createdAt,
         correctCount: data.correctCount ?? 0,
         imagePath: data.imagePath || null,
         tempId: doc.id, // 🔑 Firestore belgesinin ID'si
+        nextReview: data.nextReview,
       };
     });
 
@@ -79,6 +81,40 @@ export const getWordsSimple = async (): Promise<Word[]> => {
   }
 };
 
+export const getUserWords = async (userId: string): Promise<Word[]> => {
+  const wordsRef = collection(db, 'users', userId, 'words');
+  const now = Timestamp.now();
+  const dueQuery = query(wordsRef, where('nextReview', '<=', now));
+  const snapshot = await getDocs(dueQuery);
+  const words = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      kelime: data.english || data.kelime,
+      anlami: data.turkish || data.anlami,
+      correctCount: data.correctCount || 0,
+      tempId: doc.id,
+      nextReview: data.nextReview,
+    };
+  });
+  console.log('USER WORDS (due):', words);
+  return words;
+};
+
+export const getAdminWords = async (): Promise<Word[]> => {
+  const adminWordsRef = collection(db, 'admin_words');
+  const snapshot = await getDocs(adminWordsRef);
+  const words = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      kelime: data.kelime || data.word,
+      anlami: data.anlami || data.definition,
+      correctCount: data.correctCount || 0,
+      tempId: doc.id,
+    };
+  });
+  console.log('ADMIN WORDS:', words);
+  return words;
+};
 
 export const deleteWord = async (wordId: string): Promise<void> => {
   try {

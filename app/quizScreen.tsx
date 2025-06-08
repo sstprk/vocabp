@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { collection, getDocs, doc, updateDoc, query, where, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAdminWords, getUserWords } from './services/wordService';
 
 interface QuestionData {
   id: string;
@@ -22,65 +24,65 @@ const QuizScreen: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [answerIsCorrect, setAnswerIsCorrect] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
 
   useEffect(() => {
     fetchQuestions();
   }, []);
+
+  const getWordFrequency = async (): Promise<number> => {
+    const freq = await AsyncStorage.getItem('wordFrequency');
+    return freq ? parseInt(freq, 10) : 5;
+  };
 
   const fetchQuestions = async () => {
     setLoading(true);
     const user = auth.currentUser;
     if (!user) return;
 
-    const wordsRef = collection(db, 'users', user.uid, 'words');
-    const now = Timestamp.now();
+    const frequency = await getWordFrequency();
 
-    const dueQuery = query(wordsRef, where('nextReview', '<=', now));
-    const dueSnapshot = await getDocs(dueQuery);
+    // Admin ve kullanıcı kelimelerini çek
+    const adminWords = await getAdminWords();
+    let userWords = await getUserWords(user.uid);
 
-    if (dueSnapshot.empty) {
-      setQuestions([]);
-      setLoading(false);
-      return;
+    // Her zaman frequency kadar admin kelimesi, kalanını kullanıcı kelimeleriyle doldur
+    const selectedAdminWords = adminWords.sort(() => 0.5 - Math.random()).slice(0, frequency);
+    let selectedUserWords = userWords.sort(() => 0.5 - Math.random()).slice(0, TOTAL_QUESTIONS - frequency);
+
+    let questionsPool = [...selectedAdminWords, ...selectedUserWords];
+
+    // Eğer toplam soru sayısı 10'dan azsa, adminWords ile tamamla
+    if (questionsPool.length < TOTAL_QUESTIONS) {
+      const extraAdminWords = adminWords
+        .filter(w => !selectedAdminWords.includes(w))
+        .sort(() => 0.5 - Math.random())
+        .slice(0, TOTAL_QUESTIONS - questionsPool.length);
+      questionsPool = [...questionsPool, ...extraAdminWords];
     }
 
-    // 10'dan fazla varsa rastgele 10 tane al
-    let dueDocs = dueSnapshot.docs;
-    if (dueDocs.length > TOTAL_QUESTIONS) {
-      dueDocs = dueDocs.sort(() => Math.random() - 0.5).slice(0, TOTAL_QUESTIONS);
-    }
-
-    // Tüm kelimeler (yanlış seçenekler için)
-    const allSnapshot = await getDocs(wordsRef);
-    const allDocs = allSnapshot.docs;
-
-    const questionsArr: QuestionData[] = [];
-
-    for (const docItem of dueDocs) {
-      const correctData = docItem.data();
-
-      // Yanlış seçenekler: doğru kelime hariç 3 tane random kelime
-      let wrongOptionsPool = allDocs.filter(d => d.id !== docItem.id);
+    // Soru formatına dönüştür
+    const questionsArr: QuestionData[] = questionsPool.map((word, idx) => {
+      // 3 yanlış şık için havuzdan farklı kelimeler seç
+      let wrongOptionsPool = questionsPool.filter(w => w !== word);
       const wrongOptions: string[] = [];
-
       while (wrongOptions.length < 3 && wrongOptionsPool.length > 0) {
         const randomIndex = Math.floor(Math.random() * wrongOptionsPool.length);
-        wrongOptions.push(wrongOptionsPool[randomIndex].data().turkish);
+        wrongOptions.push(wrongOptionsPool[randomIndex].anlami);
         wrongOptionsPool.splice(randomIndex, 1);
       }
-
-      const correctAnswer = correctData.turkish;
+      const correctAnswer = word.anlami;
       const options = [...wrongOptions, correctAnswer].sort(() => Math.random() - 0.5);
       const correctOptionIndex = options.findIndex(opt => opt === correctAnswer);
-
-      questionsArr.push({
-        id: docItem.id,
-        question: correctData.english,
+      return {
+        id: word.tempId || `word-${idx}`,
+        question: word.kelime,
         options,
         correctOptionIndex,
-        correctCount: correctData.correctCount || 0,
-      });
-    }
+        correctCount: word.correctCount || 0,
+      };
+    });
 
     setQuestions(questionsArr);
     setCurrentQuestionIndex(0);
@@ -96,6 +98,12 @@ const QuizScreen: React.FC = () => {
     const isCorrect = index === currentQuestion.correctOptionIndex;
     setSelectedOption(index);
     setAnswerIsCorrect(isCorrect);
+
+    if (isCorrect) {
+      setCorrectCount(prev => prev + 1);
+    } else {
+      setWrongCount(prev => prev + 1);
+    }
 
     const user = auth.currentUser;
     if (!user) return;
@@ -142,13 +150,20 @@ const QuizScreen: React.FC = () => {
   if (questions.length === 0) {
     return (
       <View style={styles.container}>
+        <Text style={styles.finishedText}>Tebrikler! {correctCount} soruyu doğru cevapladınız!</Text>
         <Text style={styles.finishedText}>Bugünlük testin bitti!</Text>
+        <Text style={styles.summaryText}>Doğru: {correctCount}  |  Yanlış: {wrongCount}</Text>
+        <Text style={styles.analysisText}>Toplam Sorular: {correctCount + wrongCount}</Text>
         <TouchableOpacity
           style={styles.homeButton}
-          onPress={() => router.push('/homePage')}
+          onPress={() => {
+            setCorrectCount(0);
+            setWrongCount(0);
+            router.push('/homePage');
+          }}
           activeOpacity={0.7}
         >
-          <Text style={styles.homeButtonText}>Ana Sayfaya Dön</Text>
+          <Text style={styles.homeButtonText}>Tamam</Text>
         </TouchableOpacity>
       </View>
     );
@@ -158,6 +173,12 @@ const QuizScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push('/homePage')}
+      >
+        <Text style={styles.backButtonText}>← Geri</Text>
+      </TouchableOpacity>
       <View style={styles.header}>
         <Text style={styles.title}>Vocably</Text>
         <Text style={styles.subTitle}>Quiz</Text>
@@ -221,6 +242,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f4ff',
     padding: 24,
     justifyContent: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    zIndex: 1,
+    padding: 12,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    minWidth: 80,
+    alignItems: 'center',
+    shadowColor: '#3A86FF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#3A86FF',
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
@@ -324,5 +366,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#fff',
     fontWeight: '700',
+  },
+  summaryText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#3A86FF',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  analysisText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#3A86FF',
+    marginBottom: 24,
+    textAlign: 'center',
   },
 });

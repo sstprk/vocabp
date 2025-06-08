@@ -129,7 +129,7 @@ const BrainChain = () => {
   // Görseli kaydetme fonksiyonu
   const saveImage = async () => {
     if (!imageUrl) {
-      Alert.alert('Hata', 'Kaydedilecek görsel bulunamadı.');
+      Alert.alert('Hata', 'Kaydedilecek görsel bulunamadı. Lütfen bir görsel seçin.');
       return;
     }
 
@@ -139,7 +139,7 @@ const BrainChain = () => {
       Alert.alert('Bilgi', 'Görsel kaydetme özelliği henüz eklenmedi.');
     } catch (err) {
       console.error('Error saving image:', err);
-      Alert.alert('Hata', 'Görsel kaydedilirken bir hata oluştu.');
+      Alert.alert('Hata', 'Görsel kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 

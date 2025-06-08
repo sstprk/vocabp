@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -39,7 +40,14 @@ export default function TabLayout() {
         name="exercise"
         options={{
           title: 'Exercise',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="pencil" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="barbell-outline" size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <Ionicons name="settings-outline" size={28} color={color} />,
         }}
       />
     </Tabs>

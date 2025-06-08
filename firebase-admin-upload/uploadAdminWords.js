@@ -1,11 +1,12 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccountKey.json'); // path’i servise göre değiştir
+const serviceAccount = require('./serviceAccountKey.json'); // path'i servise göre değiştir
+const fs = require('fs');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-const db = admin.firestore();
+const dbAdmin = admin.firestore();
 
 const adminWords = [
   { kelime: "apple", anlami: "elma" },
@@ -66,7 +67,7 @@ function generateTempId() {
 async function uploadAdminWords() {
   for (const word of adminWords) {
     try {
-      await db.collection('adminWords').add({
+      await dbAdmin.collection('admin_words').add({
         kelime: word.kelime,
         anlami: word.anlami,
         tempId: generateTempId(),

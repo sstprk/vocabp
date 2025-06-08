@@ -41,7 +41,7 @@ export default function IndexScreen() {
         console.log('✅ Kelimeler yüklendi');
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
-        Alert.alert('⛔ Hata', errorMessage);
+        Alert.alert('⛔ Hata', 'Bir hata oluştu. Lütfen tekrar deneyin.');
       } finally {
         setLoading(false);
       }
@@ -59,13 +59,13 @@ export default function IndexScreen() {
       });
 
       if (result.canceled) {
-        Alert.alert('İptal', 'Görsel seçilmedi.');
+        Alert.alert('İptal', 'Görsel seçilmedi. Lütfen bir görsel seçin.');
         return null;
       }
 
       return result.assets[0].uri;
     } catch (error) {
-      Alert.alert('Hata', 'Görsel seçilirken hata oluştu.');
+      Alert.alert('Hata', 'Görsel seçilirken bir hata oluştu. Lütfen tekrar deneyin.');
       return null;
     }
   };
@@ -76,7 +76,7 @@ export default function IndexScreen() {
     const pickedImage = await handlePickImage();
     if (pickedImage) {
       setSelectedImageUri(pickedImage);
-      Alert.alert('✅ Başarılı', 'Görsel seçildi.');
+      Alert.alert('✅ Başarılı', 'Görsel başarıyla seçildi!');
     }
   };
 
@@ -132,7 +132,7 @@ export default function IndexScreen() {
       Alert.alert('✅ Başarılı', 'Kelime başarıyla eklendi!');
     } catch (error) {
       console.error(error);
-      Alert.alert('Hata', 'Kelime eklenirken bir hata oluştu.');
+      Alert.alert('Hata', 'Kelime eklenirken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setAddingWord(false);
     }
@@ -151,9 +151,9 @@ export default function IndexScreen() {
             try {
               await deleteWord(item.tempId || item.kelime);
               setWords(prev => prev.filter(w => w !== item));
-              Alert.alert('✅ Başarılı', 'Kelime silindi');
+              Alert.alert('✅ Başarılı', 'Kelime başarıyla silindi!');
             } catch {
-              Alert.alert('⛔ Hata', 'Kelime silinemedi');
+              Alert.alert('⛔ Hata', 'Kelime silinemedi. Lütfen tekrar deneyin.');
             }
           },
         },

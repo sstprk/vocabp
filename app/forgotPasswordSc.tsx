@@ -24,9 +24,9 @@ const ForgotPasswordScreen = () => {
     } catch (error) {
       console.error("Şifre sıfırlama hatası:", error);
       if (error instanceof Error) {
-        Alert.alert("Hata", error.message);
+        Alert.alert("Hata", "Şifre sıfırlama sırasında bir hata oluştu. Lütfen tekrar deneyin.");
       } else {
-        Alert.alert("Hata", "Bilinmeyen bir hata oluştu.");
+        Alert.alert("Hata", "Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
       }
     }
   };

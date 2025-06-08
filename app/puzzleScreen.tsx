@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, PanResponder, Alert } from 'react-native';
+import { View, Text, StyleSheet, PanResponder, Alert, TouchableOpacity } from 'react-native';
 import { getWordsSimple } from './services/wordService';
+import { router } from 'expo-router';
 
 const PuzzleScreen = () => {
   const gridSize = 10;
@@ -22,7 +23,20 @@ const PuzzleScreen = () => {
         const wordObjects = await getWordsSimple();
         const wordList = wordObjects.map(word => word.kelime.toUpperCase());
         const filteredWords = wordList.filter(word => word.length > 0 && word.length <= gridSize);
-        setWords(filteredWords.length ? filteredWords : ['KELİME', 'YOK']);
+        setWords(filteredWords.length ? filteredWords : []);
+
+        if (filteredWords.length === 0) {
+          Alert.alert(
+            "Uyarı",
+            "Hiç kelimeniz yok. Lütfen kelime ekledikten sonra tekrar deneyiniz.",
+            [
+              {
+                text: "Tamam",
+                onPress: () => router.push('/(tabs)/exercise'),
+              },
+            ]
+          );
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'BİLİNMEYEN HATA';
         setWords(message.includes('Oturumunuz açık değil') ? ['OTURUM', 'GEREKLİ'] : ['VERİTABANI', 'HATASI']);
@@ -189,6 +203,12 @@ const PuzzleScreen = () => {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={() => router.push('/(tabs)/exercise')}
+      >
+        <Text style={styles.backButtonText}>← Geri</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>PUZZLE</Text>
       <View
         style={styles.gridContainer}
@@ -218,8 +238,8 @@ const PuzzleScreen = () => {
       <View style={styles.wordListContainer}>
         <Text style={styles.wordListTitle}>Bulunmuş Kelimeler:</Text>
         {foundWords.map((foundWordData, index) => (
-          <Text key={index} style={styles.word}>
-            {foundWordData.word}
+          <Text key={index} style={styles.wordItem}>
+            <Text style={styles.wordText}>{foundWordData.word}</Text>
           </Text>
         ))}
       </View>
@@ -228,15 +248,101 @@ const PuzzleScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  gridContainer: { width: '90%', aspectRatio: 1 },
-  row: { flex: 1, flexDirection: 'row' },
-  cell: { flex: 1, borderWidth: 1, borderColor: '#ccc', alignItems: 'center', justifyContent: 'center' },
-  cellText: { fontSize: 18, fontWeight: 'bold' },
-  wordListContainer: { width: '80%', marginTop: 20 },
-  wordListTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  word: { fontSize: 16 },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f0f4ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    zIndex: 1,
+    padding: 15,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    minWidth: 100,
+    alignItems: 'center',
+    shadowColor: '#3A86FF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  backButtonText: {
+    fontSize: 18,
+    color: '#3A86FF',
+    fontWeight: '600',
+  },
+  title: { 
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#3A86FF',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  gridContainer: { 
+    width: '90%',
+    aspectRatio: 1,
+    alignSelf: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 10,
+    shadowColor: '#3A86FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  row: { 
+    flex: 1, 
+    flexDirection: 'row',
+  },
+  cell: { 
+    flex: 1, 
+    borderWidth: 1, 
+    borderColor: '#e6ecff', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    margin: 1,
+    borderRadius: 4,
+  },
+  cellText: { 
+    fontSize: 18, 
+    fontWeight: 'bold',
+    color: '#3A86FF',
+  },
+  wordListContainer: { 
+    width: '80%', 
+    marginTop: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: '#3A86FF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  wordListTitle: { 
+    fontSize: 18, 
+    fontWeight: '600',
+    color: '#3A86FF',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  wordItem: {
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e6ecff',
+  },
+  wordText: {
+    fontSize: 16,
+    color: '#333',
+  },
 });
 
 export default PuzzleScreen;

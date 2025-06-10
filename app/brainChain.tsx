@@ -4,7 +4,6 @@ import { InferenceClient } from '@huggingface/inference';
 import { getWordsSimple, Word } from './services/wordService';
 import { useNavigation } from '@react-navigation/native';
 
-// Replace with your Hugging Face API key (free tier available)
 const client = new InferenceClient(process.env.EXPO_PUBLIC_HUGGING_FACE_API_KEY);
 
 const BrainChain = () => {
@@ -17,7 +16,6 @@ const BrainChain = () => {
   const [error, setError] = useState<string>('');
   const [fetchingWords, setFetchingWords] = useState<boolean>(false);
 
-  // Fetch words from database on component mount
   useEffect(() => {
     fetchWords();
   }, []);
@@ -43,19 +41,15 @@ const BrainChain = () => {
 
   const handleWordToggle = (word: string) => {
     if (selectedWords.includes(word)) {
-      // Remove word if already selected
       setSelectedWords(selectedWords.filter(w => w !== word));
     } else if (selectedWords.length < 5) {
-      // Add word if less than 5 words are selected
       setSelectedWords([...selectedWords, word]);
     } else {
-      // Show error if trying to select more than 5 words
       setError('En fazla 5 kelime seçebilirsiniz.');
     }
   };
 
   const generateStory = async () => {
-    // Validate inputs
     if (selectedWords.length !== 5) {
       setError('Lütfen tam olarak 5 kelime seçin.');
       return;
@@ -70,7 +64,6 @@ const BrainChain = () => {
     setError('');
     
     try {
-      // Generate story using Cerebras Inference Provider
       const storyResponse = await client.chatCompletion({
         provider: 'hf-inference',
         model: "Qwen/Qwen3-235B-A22B",
@@ -83,10 +76,8 @@ const BrainChain = () => {
       },
       );
   
-      // Yanıt formatını kontrol edin ve uygun şekilde işleyin
       console.log("API yanıtı:", storyResponse.choices[0].message);
   
-      // Cerebras API yanıt formatına göre uyarlayın
       const generatedStory = storyResponse.choices[0].message.content;
       if (generatedStory) {
         setStory(generatedStory);
@@ -94,7 +85,6 @@ const BrainChain = () => {
         setError('Hikaye oluşturulamadı. Lütfen tekrar deneyin.');
       }
 
-      // Generate image using Fal AI Inference Provider
       const imageResponse = await client.textToImage({
         provider: 'hf-inference',
         model: "black-forest-labs/FLUX.1-dev",
@@ -103,11 +93,9 @@ const BrainChain = () => {
         }
       );
 
-      // Blob'u base64'e dönüştür
       const blob = new Blob([imageResponse]);
       const reader = new FileReader();
       
-      // FileReader ile blob'u base64'e çevir
       const base64Image = await new Promise<string>((resolve) => {
         reader.onloadend = () => {
           const base64 = reader.result as string;
@@ -126,7 +114,6 @@ const BrainChain = () => {
     }
   };
 
-  // Görseli kaydetme fonksiyonu
   const saveImage = async () => {
     if (!imageUrl) {
       Alert.alert('Hata', 'Kaydedilecek görsel bulunamadı. Lütfen bir görsel seçin.');
@@ -134,8 +121,6 @@ const BrainChain = () => {
     }
 
     try {
-      // Burada görseli kaydetme işlemi yapılacak
-      // Expo Share API veya React Native CameraRoll kullanılabilir
       Alert.alert('Bilgi', 'Görsel kaydetme özelliği henüz eklenmedi.');
     } catch (err) {
       console.error('Error saving image:', err);
@@ -143,7 +128,6 @@ const BrainChain = () => {
     }
   };
 
-  // Replace the WordSelector component with the following
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>

@@ -43,17 +43,14 @@ const QuizScreen: React.FC = () => {
 
     const frequency = await getWordFrequency();
 
-    // Admin ve kullanıcı kelimelerini çek
     const adminWords = await getAdminWords();
     let userWords = await getUserWords(user.uid);
 
-    // Her zaman frequency kadar admin kelimesi, kalanını kullanıcı kelimeleriyle doldur
     const selectedAdminWords = adminWords.sort(() => 0.5 - Math.random()).slice(0, frequency);
     let selectedUserWords = userWords.sort(() => 0.5 - Math.random()).slice(0, TOTAL_QUESTIONS - frequency);
 
     let questionsPool = [...selectedAdminWords, ...selectedUserWords];
 
-    // Eğer toplam soru sayısı 10'dan azsa, adminWords ile tamamla
     if (questionsPool.length < TOTAL_QUESTIONS) {
       const extraAdminWords = adminWords
         .filter(w => !selectedAdminWords.includes(w))
@@ -62,9 +59,7 @@ const QuizScreen: React.FC = () => {
       questionsPool = [...questionsPool, ...extraAdminWords];
     }
 
-    // Soru formatına dönüştür
     const questionsArr: QuestionData[] = questionsPool.map((word, idx) => {
-      // 3 yanlış şık için havuzdan farklı kelimeler seç
       let wrongOptionsPool = questionsPool.filter(w => w !== word);
       const wrongOptions: string[] = [];
       while (wrongOptions.length < 3 && wrongOptionsPool.length > 0) {
@@ -92,7 +87,7 @@ const QuizScreen: React.FC = () => {
   };
 
   const handleOptionPress = async (index: number) => {
-    if (selectedOption !== null) return; // Zaten cevap verilmiş
+    if (selectedOption !== null) return;
 
     const currentQuestion = questions[currentQuestionIndex];
     const isCorrect = index === currentQuestion.correctOptionIndex;
@@ -134,7 +129,6 @@ const QuizScreen: React.FC = () => {
       setSelectedOption(null);
       setAnswerIsCorrect(null);
     } else {
-      // Test bitti
       setQuestions([]);
     }
   };

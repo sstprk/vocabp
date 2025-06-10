@@ -6,8 +6,8 @@ import { useRouter } from 'expo-router';
 
 interface QuestionData {
   id: string;
-  imagePath: string; // soru artık resim yolu olacak
-  options: string[]; // şıklar ingilizce kelimeler
+  imagePath: string;
+  options: string[];
   correctOptionIndex: number;
   correctCount: number;
 }
@@ -34,7 +34,6 @@ const QuizScreen: React.FC = () => {
 
   const wordsRef = collection(db, 'users', user.uid, 'words');
 
-  // nextReview filtresi kaldırıldı, tüm kelimeler alınıyor
   const allSnapshot = await getDocs(wordsRef);
   const allDocs = allSnapshot.docs;
 
@@ -44,7 +43,6 @@ const QuizScreen: React.FC = () => {
     return;
   }
 
-  // Rastgele 10 tane seç (ya da varsa daha az)
   let selectedDocs = allDocs;
   if (allDocs.length > TOTAL_QUESTIONS) {
     selectedDocs = allDocs.sort(() => Math.random() - 0.5).slice(0, TOTAL_QUESTIONS);
@@ -55,7 +53,6 @@ const QuizScreen: React.FC = () => {
   for (const docItem of selectedDocs) {
     const correctData = docItem.data();
 
-    // Yanlış seçenekler: doğru kelime hariç 3 tane random kelime (İngilizce)
     let wrongOptionsPool = allDocs.filter(d => d.id !== docItem.id);
     const wrongOptions: string[] = [];
 
@@ -86,7 +83,7 @@ const QuizScreen: React.FC = () => {
 };
 
   const handleOptionPress = async (index: number) => {
-    if (selectedOption !== null) return; // Zaten cevap verilmiş
+    if (selectedOption !== null) return;
 
     const currentQuestion = questions[currentQuestionIndex];
     const isCorrect = index === currentQuestion.correctOptionIndex;
@@ -122,7 +119,6 @@ const QuizScreen: React.FC = () => {
       setSelectedOption(null);
       setAnswerIsCorrect(null);
     } else {
-      // Test bitti
       setQuestions([]);
     }
   };
@@ -164,7 +160,6 @@ const QuizScreen: React.FC = () => {
       </Text>
 
       <View style={styles.card}>
-        {/* Soru olarak resim gösteriliyor */}
         {currentQuestion.imagePath ? (
           <Image
             source={{ uri: currentQuestion.imagePath }}
